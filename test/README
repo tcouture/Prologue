@@ -1,0 +1,46 @@
+
+This directory is intended for PlatformIO Test Runner and project tests.
+
+Unit Testing is a software testing method by which individual units of
+source code, sets of one or more MCU program modules together with associated
+control data, usage procedures, and operating procedures, are tested to
+determine whether they are fit for use. Unit testing finds problems early
+in the development cycle.
+
+More information about PlatformIO Unit Testing:
+- https://docs.platformio.org/en/latest/advanced/unit-testing/index.html
+
+## Feature checklist:
+
+    ✅ 8-voice polyphony (extensible to 16)
+    ✅ Dual VCO with saw/tri/square + shape modifier
+    ✅ SVF lowpass filter with drive and key tracking
+    ✅ Amp + Mod envelopes (ADSR)
+    ✅ LFO (5 shapes, 4 destinations)
+    ✅ Portamento
+    ✅ Pitch bend (±2 semitones)
+    ✅ Master bus FX (chorus + delay + reverb)
+    ✅ USB + DIN MIDI
+    ✅ Touch UI with tabbed pages and tap-select/drag-adjust
+    ✅ SD patch storage (128 slots)
+    ✅ Click-free parameter changes
+
+## What to Test
+
+- LFO — set LFO_RATE to ~2 Hz, LFO_DEPTH to 50%, destination CUTOFF. Hold a note; filter should wobble.
+- Portamento — turn up P_PORTAMENTO past 20%. Play ascending notes legato; pitch should glide.
+- Pitch bend — move your controller's wheel; notes should bend ±2 semitones smoothly.
+- Chorus — crank FX_MOD_DEPTH. Signal should widen and shimmer.
+- Delay — DLY_MIX to 30%, DLY_TIME to 250ms, DLY_FB to 40%. Classic ping-pong echo.
+- Reverb — REV_MIX to 40%, REV_SIZE to 60%. Sustained notes should bloom with tail.
+- Patch load click test — design a patch with full resonance and ~90% cutoff. Save. Go to a different patch with minimum cutoff. Load back and forth. There should be no audible clicks — just a ~15 ms sweep.
+
+## Suggested Enhancements (Your Call)
+
+A few directions you might want to take this further:
+
+- Noise generator + "Multi" oscillator — Prologue's multi-engine has noise, VPM (phase modulation), and user oscillators. A simple white noise + FM pair would round out the mixer.
+- Unison/Detune voice mode — stacks all voices on one note with detuning for fat leads.
+- Hardware encoders — when you're ready to add them, I can show you an efficient interrupt-driven reader that ties directly into the same Synth::setParam plumbing the touch UI uses.
+- Patch name editor — on-screen keyboard for naming patches before save.
+- MIDI learn — tap a knob, wiggle a controller, CC gets bound to that parameter.
