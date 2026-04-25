@@ -34,8 +34,8 @@ public:
         paramChanged = true;
     }
 
-    float getParam(uint8_t id) const { return patch.params[id]; }
-    Patch& getPatch() { return patch; }
+    float  getParam(uint8_t id) const { return patch.params[id]; }
+    Patch& getPatch()                 { return patch; }
 
     void loadPatch(const Patch& newPatch) {
         synthAudio.getVoices().allNotesOff();
@@ -52,53 +52,48 @@ public:
 
     bool consumeParamChanged() { bool c = paramChanged; paramChanged = false; return c; }
 
-    // Voice activity passthrough for UI status bar
-    uint8_t getVoiceActivity(bool* mask) const {
-        return synthAudio.getVoices().getVoiceActivity(mask);
-    }
-
-    // Voice activity passthrough
     uint8_t getVoiceActivity(bool* mask) const {
         return synthAudio.getVoices().getVoiceActivity(mask);
     }
 
 private:
     Patch patch;
-    bool paramChanged = false;
+    bool  paramChanged = false;
 
     void applyDefaults() {
-        patch.params[P_VCO1_WAVE]   = 0.0f;
-        patch.params[P_VCO1_OCT]    = 0.5f;
-        patch.params[P_VCO2_WAVE]   = 0.0f;
-        patch.params[P_VCO2_OCT]    = 0.5f;
-        patch.params[P_VCO2_PITCH]  = 0.5f;
-        patch.params[P_MIX_VCO1]    = 0.8f;
-        patch.params[P_MIX_VCO2]    = 0.0f;
-        patch.params[P_FILT_CUTOFF] = 0.7f;
-        patch.params[P_FILT_RESO]   = 0.2f;
-        patch.params[P_FILT_DRIVE]  = 0.0f;
-        patch.params[P_FILT_KEYTRK] = 0.0f;
-        patch.params[P_AEG_A]       = 0.1f;
-        patch.params[P_AEG_D]       = 0.4f;
-        patch.params[P_AEG_S]       = 0.7f;
-        patch.params[P_AEG_R]       = 0.3f;
-        patch.params[P_MEG_A]       = 0.0f;
-        patch.params[P_MEG_D]       = 0.4f;
-        patch.params[P_MEG_S]       = 0.0f;
-        patch.params[P_MEG_R]       = 0.3f;
-        patch.params[P_MEG_AMT]     = 0.5f;
-        patch.params[P_LFO_WAVE]    = 0.0f;
-        patch.params[P_LFO_RATE]    = 0.3f;
-        patch.params[P_LFO_DEPTH]   = 0.0f;
-        patch.params[P_LFO_DEST]    = 0.0f;
-        patch.params[P_FX_MOD_DEPTH]= 0.0f;
-        patch.params[P_FX_DELAY_MIX]= 0.0f;
-        patch.params[P_FX_REVERB_MIX]=0.0f;
-        patch.params[P_MASTER_VOL]  = 0.7f;
-        patch.params[P_PORTAMENTO]   = 0.0f;
-        patch.params[P_VCO2_CROSS_MOD]= 0.0f;   // FM depth: off by default
-        patch.params[P_MIX_MULTI]    = 0.0f;   // noise level: off by default
-        patch.params[P_VOICE_MODE]  = 0.0f;
+        patch.params[P_VCO1_WAVE]      = 0.0f;
+        patch.params[P_VCO1_OCT]       = 0.5f;
+        patch.params[P_VCO2_WAVE]      = 0.0f;
+        patch.params[P_VCO2_OCT]       = 0.5f;
+        patch.params[P_VCO2_PITCH]     = 0.5f;
+        patch.params[P_MIX_VCO1]       = 0.8f;
+        patch.params[P_MIX_VCO2]       = 0.0f;
+        patch.params[P_MIX_MULTI]      = 0.0f;
+        patch.params[P_FILT_CUTOFF]    = 0.7f;
+        patch.params[P_FILT_RESO]      = 0.2f;
+        patch.params[P_FILT_DRIVE]     = 0.0f;
+        patch.params[P_FILT_KEYTRK]    = 0.0f;
+        patch.params[P_AEG_A]          = 0.1f;
+        patch.params[P_AEG_D]          = 0.4f;
+        patch.params[P_AEG_S]          = 0.7f;
+        patch.params[P_AEG_R]          = 0.3f;
+        patch.params[P_MEG_A]          = 0.0f;
+        patch.params[P_MEG_D]          = 0.4f;
+        patch.params[P_MEG_S]          = 0.0f;
+        patch.params[P_MEG_R]          = 0.3f;
+        patch.params[P_MEG_AMT]        = 0.5f;
+        patch.params[P_LFO_WAVE]       = 0.0f;
+        patch.params[P_LFO_RATE]       = 0.3f;
+        patch.params[P_LFO_DEPTH]      = 0.0f;
+        patch.params[P_LFO_DEST]       = 0.0f;
+        patch.params[P_VCO2_CROSS_MOD] = 0.0f;
+        patch.params[P_FX_MOD_DEPTH]   = 0.0f;
+        patch.params[P_FX_DELAY_MIX]   = 0.0f;
+        patch.params[P_FX_REVERB_MIX]  = 0.0f;
+        patch.params[P_MASTER_VOL]     = 0.7f;
+        patch.params[P_PORTAMENTO]     = 0.0f;
+        patch.params[P_VOICE_MODE]     = 0.0f;
+        patch.params[P_UNISON_DETUNE]  = 0.2f;  // default: 10 cents spread (nice out of the box)
         strncpy(patch.name, "INIT", 16);
         patch.name[16] = 0;
     }

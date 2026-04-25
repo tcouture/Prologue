@@ -59,7 +59,7 @@ void Voice::setParams(const float* p) {
 
     mix1Smooth.setTarget(p[P_MIX_VCO1]);
     mix2Smooth.setTarget(p[P_MIX_VCO2]);
-    mixNoisSmooth.setTarget(p[P_MIX_MULTI]);   // noise level
+    mixNoisSmooth.setTarget(p[P_MIX_MULTI]);
 
     baseCutoff = 20.0f * powf(1000.0f, p[P_FILT_CUTOFF]);
     cutoffSmooth.setTarget(baseCutoff);
@@ -76,18 +76,19 @@ void Voice::setParams(const float* p) {
 
     lfoShape = (LFOShape)(int)(p[P_LFO_WAVE] * 4.99f);
     lfo.setShape(lfoShape);
-    float lfoHz = 0.05f * powf(400.0f, p[P_LFO_RATE]);
-    lfo.setRate(lfoHz);
+    lfo.setRate(0.05f * powf(400.0f, p[P_LFO_RATE]));
     lfoDepth = p[P_LFO_DEPTH];
     lfoDest  = (uint8_t)(p[P_LFO_DEST] * 3.99f);
 
-    // FM depth: 0-1 param → 0-4 turns of phase modulation index
     fmDepth = p[P_VCO2_CROSS_MOD] * 4.0f;
 
     if (p[P_PORTAMENTO] < 0.01f)
         setPortamentoTime(0.0f);
     else
         setPortamentoTime(0.001f * powf(2000.0f, p[P_PORTAMENTO]));
+
+    // Note: unisonDetuneCents is set externally by VoiceManager, not from params,
+    // so we do NOT touch it here.
 }
 
 void Voice::renderBlock(float* out, uint32_t n) {
@@ -102,13 +103,16 @@ void Voice::renderBlock(float* out, uint32_t n) {
             if (fabsf(targetFreqHz - baseFreqHz) < 0.1f) baseFreqHz = targetFreqHz;
         }
 
-        // --- Pitch bend + LFO ---
+        // --- Pitch bend + unison detune + LFO ---
         pitchBendSmooth.setTarget(pitchBendSemis);
         pitchBendSmooth.process();
         float lfoVal = lfo.process() * lfoDepth;
 
         float pitchModSemis = (lfoDest == LFO_DEST_PITCH) ? lfoVal * 2.0f : 0.0f;
-        float freqMul = powf(2.0f, (pitchBendSmooth.value() + pitchModSemis) / 12.0f);
+        // unisonDetuneCents is in cents; convert to semitones for the combined multiplier
+        float totalSemis = pitchBendSmooth.value() + pitchModSemis
+                         + unisonDetuneCents * 0.01f;
+        float freqMul = powf(2.0f, totalSemis / 12.0f);
 
         // --- VCO frequencies ---
         float vco1Freq = baseFreqHz * freqMul;
@@ -127,27 +131,23 @@ void Voice::renderBlock(float* out, uint32_t n) {
             vco2.setShapeMod(s);
         }
 
-        // --- VCO2: process first (unmodulated) — its output drives FM ---
+        // --- VCO2 first (FM modulator) ---
         float o2raw = vco2.process();
 
-        // --- FM: inject VCO2 as phase modulator on VCO1 ---
-        // fmDepth is index in normalised turns [0,1) domain
+        // --- FM: VCO2 -> VCO1 phase modulation ---
         if (fmDepth > 0.0f) {
             float phOffset = o2raw * fmDepth * (vco2Freq / vco1Freq);
-            // Wrap to [0,1)
             if (phOffset >= 1.0f)  phOffset -= (int) phOffset + 1;
             if (phOffset <  0.0f)  phOffset += (int)(-phOffset) + 1;
             vco1.setPhaseOffset(phOffset);
         }
 
-        // --- VCO1: process with FM phase offset already queued ---
-        float o1    = vco1.process()    * mix1Smooth.process();
-        float o2    = o2raw             * mix2Smooth.process();
-        float noise = nextNoise()       * mixNoisSmooth.process();
+        float o1    = vco1.process()  * mix1Smooth.process();
+        float o2    = o2raw           * mix2Smooth.process();
+        float noise = nextNoise()     * mixNoisSmooth.process();
+        float mix   = (o1 + o2 + noise) * 0.5f;
 
-        float mix = (o1 + o2 + noise) * 0.5f;
-
-        // --- Filter modulation ---
+        // --- Filter ---
         float modEnv = modEG.process();
         float cutMod = cutoffSmooth.process() * keyOffset
                      * powf(2.0f, modEnv * modEGAmount * 4.0f);

@@ -10,6 +10,7 @@ inline uint8_t ccToParam(uint8_t cc) {
         case 20: return P_MIX_VCO1;
         case 21: return P_MIX_VCO2;
         case 22: return P_MIX_MULTI;         // NOISE LEVEL
+        case 23: return P_UNISON_DETUNE;     // UNISON DETUNE
         case 43: return P_FILT_CUTOFF;
         case 44: return P_FILT_RESO;
         case 45: return P_FILT_DRIVE;

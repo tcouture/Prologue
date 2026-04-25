@@ -9,7 +9,7 @@
 enum ParamId : uint8_t {
     P_VCO1_WAVE, P_VCO1_OCT, P_VCO1_PITCH, P_VCO1_SHAPE,
     P_VCO2_WAVE, P_VCO2_OCT, P_VCO2_PITCH, P_VCO2_SHAPE,
-    P_VCO2_CROSS_MOD, P_VCO2_SYNC, P_VCO2_RING,
+    P_VCO2_CROSS_MOD, P_UNISON_DETUNE, P_VCO2_RING,  // P_VCO2_SYNC -> P_UNISON_DETUNE
     P_MIX_VCO1, P_MIX_VCO2, P_MIX_MULTI,
     P_FILT_CUTOFF, P_FILT_RESO, P_FILT_DRIVE, P_FILT_KEYTRK, P_FILT_TYPE,
     P_AEG_A, P_AEG_D, P_AEG_S, P_AEG_R,
@@ -22,6 +22,12 @@ enum ParamId : uint8_t {
     PARAM_COUNT
 };
 
+enum VoiceMode : uint8_t {
+    VOICE_MODE_POLY   = 0,
+    VOICE_MODE_UNISON = 1,
+    VOICE_MODE_MONO   = 2
+};
+
 enum LFODest : uint8_t {
     LFO_DEST_PITCH = 0,
     LFO_DEST_SHAPE,
@@ -32,5 +38,5 @@ enum LFODest : uint8_t {
 
 struct Patch {
     float params[PARAM_COUNT];
-    char name[17];
+    char  name[17];
 };

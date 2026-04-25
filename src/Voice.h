@@ -14,8 +14,9 @@ public:
     bool    isActive()  const { return ampEG.isActive(); }
     uint8_t getNote()   const { return currentNote; }
     void setParams(const float* params);
-    void setPitchBend(float semis)    { pitchBendSemis = semis; }
-    void setPortamentoTime(float sec) { portaTimeSec = sec; }
+    void setPitchBend(float semis)      { pitchBendSemis = semis; }
+    void setPortamentoTime(float sec)   { portaTimeSec = sec; }
+    void setUnisonDetune(float cents)   { unisonDetuneCents = cents; }  // per-voice static detune
     void renderBlock(float* out, uint32_t n);
 
 private:
@@ -36,6 +37,9 @@ private:
     float portaTimeSec   = 0.0f;
     float pitchBendSemis = 0.0f;
 
+    // Per-voice static detune for unison mode (cents, set by VoiceManager)
+    float unisonDetuneCents = 0.0f;
+
     float vco2DetuneRatio = 1.003f;
     int   vco1OctShift    = 0;
     int   vco2OctShift    = 0;
@@ -53,12 +57,12 @@ private:
     uint8_t  lfoDest  = LFO_DEST_PITCH;
 
     // FM (VCO2 modulates VCO1 phase)
-    float fmDepth = 0.0f;   // 0-1 param scaled to 0-4 turns of phase modulation
+    float fmDepth = 0.0f;
 
     // White noise — per-voice LCG so voices are uncorrelated
     uint32_t noiseSeed = 22222u;
     inline float nextNoise() {
         noiseSeed = noiseSeed * 1664525u + 1013904223u;
-        return (int32_t)noiseSeed / 2147483648.0f;  // [-1, 1)
+        return (int32_t)noiseSeed / 2147483648.0f;
     }
 };

@@ -44,8 +44,10 @@ void fmtPortamento(float v, char* o, size_t n) {
     else              snprintf(o, n, "%.1fs", ms / 1000.0f);
 }
 void fmtFmDepth(float v, char* o, size_t n) {
-    // Display as FM index 0.00 – 4.00
     snprintf(o, n, "%.2f", v * 4.0f);
+}
+void fmtCents(float v, char* o, size_t n) {
+    snprintf(o, n, "%dct", (int)(v * 50.0f));
 }
 
 const PageDef PAGES[PAGE_COUNT] = {
@@ -66,8 +68,8 @@ const PageDef PAGES[PAGE_COUNT] = {
         { P_FILT_KEYTRK,    "KEYTRK",    fmtPercent },
         { P_MIX_VCO1,       "MIX VCO1",  fmtPercent },
         { P_MIX_VCO2,       "MIX VCO2",  fmtPercent },
-        { P_MIX_MULTI,      "NOISE LVL", fmtPercent },  // was "MIX MULT"
-        { P_VCO2_CROSS_MOD, "FM DEPTH",  fmtFmDepth },  // was P_FILT_TYPE stub
+        { P_MIX_MULTI,      "NOISE LVL", fmtPercent },
+        { P_VCO2_CROSS_MOD, "FM DEPTH",  fmtFmDepth },
     }},
     { "ENV", {
         { P_AEG_A,   "AMP A",   fmtMs      },
@@ -100,14 +102,14 @@ const PageDef PAGES[PAGE_COUNT] = {
         { P_MASTER_VOL,     "MASTER",    fmtPercent },
     }},
     { "GLOBAL", {
-        { P_PORTAMENTO, "PORTA",      fmtPortamento },
-        { P_VOICE_MODE, "VOICE MODE", fmtVoiceMode  },
-        { PARAM_COUNT,  "",           nullptr },
-        { PARAM_COUNT,  "",           nullptr },
-        { PARAM_COUNT,  "",           nullptr },
-        { PARAM_COUNT,  "",           nullptr },
-        { PARAM_COUNT,  "",           nullptr },
-        { PARAM_COUNT,  "",           nullptr },
+        { P_PORTAMENTO,    "PORTAMENTO",      fmtPortamento },
+        { P_VOICE_MODE,    "VOICE MODE", fmtVoiceMode  },
+        { P_UNISON_DETUNE, "UNI DETUNE", fmtCents      },
+        { PARAM_COUNT,     "",           nullptr },
+        { PARAM_COUNT,     "",           nullptr },
+        { PARAM_COUNT,     "",           nullptr },
+        { PARAM_COUNT,     "",           nullptr },
+        { PARAM_COUNT,     "",           nullptr },
     }},
     { "PATCH", {
         { PARAM_COUNT, "", nullptr },
