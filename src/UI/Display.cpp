@@ -8,7 +8,7 @@ void Display::begin() {
     _tft.setTextSize(1);
 
     _touch.begin();
-    _touch.setRotation(3);
+    _touch.setRotation(1);
     pinMode(TOUCH_IRQ, INPUT);
 }
 

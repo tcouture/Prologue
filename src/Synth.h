@@ -87,7 +87,7 @@ private:
         patch.params[P_MASTER_VOL]  = 0.7f;
         patch.params[P_PORTAMENTO]  = 0.0f;
         patch.params[P_VOICE_MODE]  = 0.0f;
-        strncpy(patch.name, "INIT PATCH", 16);
+        strncpy(patch.name, "INIT", 16);
         patch.name[16] = 0;
     }
 };
