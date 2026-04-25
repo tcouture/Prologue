@@ -52,6 +52,11 @@ public:
 
     bool consumeParamChanged() { bool c = paramChanged; paramChanged = false; return c; }
 
+    // Voice activity passthrough for UI status bar
+    uint8_t getVoiceActivity(bool* mask) const {
+        return synthAudio.getVoices().getVoiceActivity(mask);
+    }
+
     // Voice activity passthrough
     uint8_t getVoiceActivity(bool* mask) const {
         return synthAudio.getVoices().getVoiceActivity(mask);
@@ -90,7 +95,9 @@ private:
         patch.params[P_FX_DELAY_MIX]= 0.0f;
         patch.params[P_FX_REVERB_MIX]=0.0f;
         patch.params[P_MASTER_VOL]  = 0.7f;
-        patch.params[P_PORTAMENTO]  = 0.0f;
+        patch.params[P_PORTAMENTO]   = 0.0f;
+        patch.params[P_VCO2_CROSS_MOD]= 0.0f;   // FM depth: off by default
+        patch.params[P_MIX_MULTI]    = 0.0f;   // noise level: off by default
         patch.params[P_VOICE_MODE]  = 0.0f;
         strncpy(patch.name, "INIT", 16);
         patch.name[16] = 0;

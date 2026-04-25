@@ -8,14 +8,17 @@ void Oscillator::setFrequency(float hz) {
 }
 
 float Oscillator::polyBlep(float t, float dt) {
-    if (t < dt) { t /= dt; return t + t - t*t - 1.0f; }
-    if (t > 1.0f - dt) { t = (t - 1.0f) / dt; return t*t + t + t + 1.0f; }
+    if (t < dt)        { t /= dt;         return  t + t - t*t - 1.0f; }
+    if (t > 1.0f - dt) { t = (t-1.0f)/dt; return  t*t + t + t + 1.0f; }
     return 0.0f;
 }
 
 float Oscillator::process() {
-    float t = phase;
-    float dt = phaseInc;
+    // Apply FM phase offset, wrapped to [0,1)
+    float t = phase + phaseOffset;
+    if (t >= 1.0f) t -= (int)t + 1;
+    if (t <  0.0f) t += (int)(-t) + 1;
+    float dt  = phaseInc;
     float out = 0.0f;
 
     switch (shape) {
@@ -45,7 +48,9 @@ float Oscillator::process() {
             break;
         }
     }
+
     phase += phaseInc;
     if (phase >= 1.0f) phase -= 1.0f;
+    phaseOffset = 0.0f;  // consumed each sample; caller sets fresh every tick
     return out;
 }

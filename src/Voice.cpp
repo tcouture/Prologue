@@ -14,18 +14,19 @@ void Voice::init(float sr) {
     modEG.init(sr);
     lfo.init(sr);
 
-    cutoffSmooth.init(sr, 5.0f);
+    cutoffSmooth.init(sr,    5.0f);
     pitchBendSmooth.init(sr, 8.0f);
-    mix1Smooth.init(sr, 15.0f);
-    mix2Smooth.init(sr, 15.0f);
+    mix1Smooth.init(sr,     15.0f);
+    mix2Smooth.init(sr,     15.0f);
+    mixNoisSmooth.init(sr,  15.0f);
 }
 
 void Voice::noteOn(uint8_t note, uint8_t vel) {
     targetNote = note;
-    velocity = vel / 127.0f;
+    velocity   = vel / 127.0f;
 
     float newFreq = midiToHz(note + vco1OctShift * 12);
-    targetFreqHz = newFreq;
+    targetFreqHz  = newFreq;
 
     if (portaTimeSec <= 0.0005f || !ampEG.isActive()) {
         baseFreqHz = newFreq;
@@ -45,19 +46,20 @@ void Voice::noteOff() {
 }
 
 void Voice::setParams(const float* p) {
-    vco1.setShape((WaveShape)(int)(p[P_VCO1_WAVE]  * 2.99f));
+    vco1.setShape((WaveShape)(int)(p[P_VCO1_WAVE] * 2.99f));
     vco1.setShapeMod(p[P_VCO1_SHAPE]);
-    vco2.setShape((WaveShape)(int)(p[P_VCO2_WAVE]  * 2.99f));
+    vco2.setShape((WaveShape)(int)(p[P_VCO2_WAVE] * 2.99f));
     vco2.setShapeMod(p[P_VCO2_SHAPE]);
 
     vco1OctShift = (int)(p[P_VCO1_OCT] * 4.99f) - 2;
     vco2OctShift = (int)(p[P_VCO2_OCT] * 4.99f) - 2;
 
-    float cents = (p[P_VCO2_PITCH] - 0.5f) * 200.0f;
+    float cents     = (p[P_VCO2_PITCH] - 0.5f) * 200.0f;
     vco2DetuneRatio = powf(2.0f, cents / 1200.0f);
 
     mix1Smooth.setTarget(p[P_MIX_VCO1]);
     mix2Smooth.setTarget(p[P_MIX_VCO2]);
+    mixNoisSmooth.setTarget(p[P_MIX_MULTI]);   // noise level
 
     baseCutoff = 20.0f * powf(1000.0f, p[P_FILT_CUTOFF]);
     cutoffSmooth.setTarget(baseCutoff);
@@ -79,11 +81,13 @@ void Voice::setParams(const float* p) {
     lfoDepth = p[P_LFO_DEPTH];
     lfoDest  = (uint8_t)(p[P_LFO_DEST] * 3.99f);
 
-    if (p[P_PORTAMENTO] < 0.01f) {
+    // FM depth: 0-1 param → 0-4 turns of phase modulation index
+    fmDepth = p[P_VCO2_CROSS_MOD] * 4.0f;
+
+    if (p[P_PORTAMENTO] < 0.01f)
         setPortamentoTime(0.0f);
-    } else {
+    else
         setPortamentoTime(0.001f * powf(2000.0f, p[P_PORTAMENTO]));
-    }
 }
 
 void Voice::renderBlock(float* out, uint32_t n) {
@@ -92,44 +96,69 @@ void Voice::renderBlock(float* out, uint32_t n) {
     float keyOffset = powf(2.0f, ((float)currentNote - 60.0f) / 12.0f * keyTrack);
 
     for (uint32_t i = 0; i < n; i++) {
+        // --- Portamento ---
         if (portaCoeff < 1.0f) {
             baseFreqHz += portaCoeff * (targetFreqHz - baseFreqHz);
             if (fabsf(targetFreqHz - baseFreqHz) < 0.1f) baseFreqHz = targetFreqHz;
         }
+
+        // --- Pitch bend + LFO ---
         pitchBendSmooth.setTarget(pitchBendSemis);
         pitchBendSmooth.process();
-
         float lfoVal = lfo.process() * lfoDepth;
 
-        float pitchModSemis = 0.0f;
-        if (lfoDest == LFO_DEST_PITCH) pitchModSemis = lfoVal * 2.0f;
+        float pitchModSemis = (lfoDest == LFO_DEST_PITCH) ? lfoVal * 2.0f : 0.0f;
         float freqMul = powf(2.0f, (pitchBendSmooth.value() + pitchModSemis) / 12.0f);
-        vco1.setFrequency(baseFreqHz * freqMul);
-        float v2base = baseFreqHz * powf(2.0f, (float)(vco2OctShift - vco1OctShift));
-        vco2.setFrequency(v2base * vco2DetuneRatio * freqMul);
 
+        // --- VCO frequencies ---
+        float vco1Freq = baseFreqHz * freqMul;
+        float v2base   = baseFreqHz * powf(2.0f, (float)(vco2OctShift - vco1OctShift));
+        float vco2Freq = v2base * vco2DetuneRatio * freqMul;
+
+        vco1.setFrequency(vco1Freq);
+        vco2.setFrequency(vco2Freq);
+
+        // --- Shape LFO ---
         if (lfoDest == LFO_DEST_SHAPE) {
-            float s1 = 0.5f + lfoVal * 0.5f;
-            if (s1 < 0.02f) s1 = 0.02f;
-            if (s1 > 0.98f) s1 = 0.98f;
-            vco1.setShapeMod(s1);
-            vco2.setShapeMod(s1);
+            float s = 0.5f + lfoVal * 0.5f;
+            if (s < 0.02f) s = 0.02f;
+            if (s > 0.98f) s = 0.98f;
+            vco1.setShapeMod(s);
+            vco2.setShapeMod(s);
         }
 
-        float o1 = vco1.process() * mix1Smooth.process();
-        float o2 = vco2.process() * mix2Smooth.process();
-        float mix = (o1 + o2) * 0.5f;
+        // --- VCO2: process first (unmodulated) — its output drives FM ---
+        float o2raw = vco2.process();
 
+        // --- FM: inject VCO2 as phase modulator on VCO1 ---
+        // fmDepth is index in normalised turns [0,1) domain
+        if (fmDepth > 0.0f) {
+            float phOffset = o2raw * fmDepth * (vco2Freq / vco1Freq);
+            // Wrap to [0,1)
+            if (phOffset >= 1.0f)  phOffset -= (int) phOffset + 1;
+            if (phOffset <  0.0f)  phOffset += (int)(-phOffset) + 1;
+            vco1.setPhaseOffset(phOffset);
+        }
+
+        // --- VCO1: process with FM phase offset already queued ---
+        float o1    = vco1.process()    * mix1Smooth.process();
+        float o2    = o2raw             * mix2Smooth.process();
+        float noise = nextNoise()       * mixNoisSmooth.process();
+
+        float mix = (o1 + o2 + noise) * 0.5f;
+
+        // --- Filter modulation ---
         float modEnv = modEG.process();
         float cutMod = cutoffSmooth.process() * keyOffset
                      * powf(2.0f, modEnv * modEGAmount * 4.0f);
         if (lfoDest == LFO_DEST_CUTOFF) cutMod *= powf(2.0f, lfoVal * 3.0f);
         if (cutMod > 18000.0f) cutMod = 18000.0f;
-        if (cutMod < 20.0f)    cutMod = 20.0f;
+        if (cutMod <    20.0f) cutMod =    20.0f;
         filter.setCutoff(cutMod);
 
         float s = filter.processLP(mix);
 
+        // --- Amp ---
         float amp = ampEG.process() * velocity;
         if (lfoDest == LFO_DEST_AMP) amp *= (1.0f + lfoVal * 0.5f);
 

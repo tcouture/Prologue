@@ -7,46 +7,45 @@ void fmtGeneric(float v, char* o, size_t n) {
 }
 void fmtWave(float v, char* o, size_t n) {
     static const char* names[] = { "SAW", "TRI", "SQR" };
-    int idx = (int)(v * 2.99f);
-    snprintf(o, n, "%s", names[idx]);
+    snprintf(o, n, "%s", names[(int)(v * 2.99f)]);
 }
 void fmtLfoWave(float v, char* o, size_t n) {
     static const char* names[] = { "SIN", "TRI", "SQR", "SAW", "S&H" };
-    int idx = (int)(v * 4.99f);
-    snprintf(o, n, "%s", names[idx]);
+    snprintf(o, n, "%s", names[(int)(v * 4.99f)]);
 }
 void fmtLfoDest(float v, char* o, size_t n) {
     static const char* names[] = { "PITCH", "SHAPE", "CUTOFF", "AMP" };
-    int idx = (int)(v * 3.99f);
-    snprintf(o, n, "%s", names[idx]);
+    snprintf(o, n, "%s", names[(int)(v * 3.99f)]);
 }
 void fmtOctave(float v, char* o, size_t n) {
-    int oct = (int)(v * 4.99f) - 2;
-    snprintf(o, n, "%+d", oct);
+    snprintf(o, n, "%+d", (int)(v * 4.99f) - 2);
 }
 void fmtMs(float v, char* o, size_t n) {
     float ms = 1.0f * powf(10000.0f, v);
     if (ms < 1000.0f) snprintf(o, n, "%dms", (int)ms);
-    else snprintf(o, n, "%.1fs", ms / 1000.0f);
+    else              snprintf(o, n, "%.1fs", ms / 1000.0f);
 }
 void fmtHz(float v, char* o, size_t n) {
     float hz = 20.0f * powf(1000.0f, v);
     if (hz < 1000.0f) snprintf(o, n, "%dHz", (int)hz);
-    else snprintf(o, n, "%.1fk", hz / 1000.0f);
+    else              snprintf(o, n, "%.1fk", hz / 1000.0f);
 }
 void fmtPercent(float v, char* o, size_t n) {
     snprintf(o, n, "%d%%", (int)(v * 100.0f));
 }
 void fmtVoiceMode(float v, char* o, size_t n) {
     static const char* names[] = { "POLY", "UNISON", "MONO" };
-    int idx = (int)(v * 2.99f);
-    snprintf(o, n, "%s", names[idx]);
+    snprintf(o, n, "%s", names[(int)(v * 2.99f)]);
 }
 void fmtPortamento(float v, char* o, size_t n) {
     if (v < 0.01f) { snprintf(o, n, "OFF"); return; }
     float ms = 1.0f * powf(2000.0f, v);
     if (ms < 1000.0f) snprintf(o, n, "%dms", (int)ms);
-    else snprintf(o, n, "%.1fs", ms / 1000.0f);
+    else              snprintf(o, n, "%.1fs", ms / 1000.0f);
+}
+void fmtFmDepth(float v, char* o, size_t n) {
+    // Display as FM index 0.00 – 4.00
+    snprintf(o, n, "%.2f", v * 4.0f);
 }
 
 const PageDef PAGES[PAGE_COUNT] = {
@@ -61,23 +60,23 @@ const PageDef PAGES[PAGE_COUNT] = {
         { P_VCO2_PITCH, "VCO2 PITCH", fmtGeneric },
     }},
     { "FILTER", {
-        { P_FILT_CUTOFF, "CUTOFF",  fmtHz      },
-        { P_FILT_RESO,   "RESO",    fmtPercent },
-        { P_FILT_DRIVE,  "DRIVE",   fmtPercent },
-        { P_FILT_KEYTRK, "KEYTRK",  fmtPercent },
-        { P_MIX_VCO1,    "MIX VCO1",fmtPercent },
-        { P_MIX_VCO2,    "MIX VCO2",fmtPercent },
-        { P_MIX_MULTI,   "MIX MULT",fmtPercent },
-        { P_FILT_TYPE,   "TYPE",    fmtGeneric },
+        { P_FILT_CUTOFF,    "CUTOFF",    fmtHz      },
+        { P_FILT_RESO,      "RESO",      fmtPercent },
+        { P_FILT_DRIVE,     "DRIVE",     fmtPercent },
+        { P_FILT_KEYTRK,    "KEYTRK",    fmtPercent },
+        { P_MIX_VCO1,       "MIX VCO1",  fmtPercent },
+        { P_MIX_VCO2,       "MIX VCO2",  fmtPercent },
+        { P_MIX_MULTI,      "NOISE LVL", fmtPercent },  // was "MIX MULT"
+        { P_VCO2_CROSS_MOD, "FM DEPTH",  fmtFmDepth },  // was P_FILT_TYPE stub
     }},
     { "ENV", {
-        { P_AEG_A, "AMP A", fmtMs      },
-        { P_AEG_D, "AMP D", fmtMs      },
-        { P_AEG_S, "AMP S", fmtPercent },
-        { P_AEG_R, "AMP R", fmtMs      },
-        { P_MEG_A, "MOD A", fmtMs      },
-        { P_MEG_D, "MOD D", fmtMs      },
-        { P_MEG_S, "MOD S", fmtPercent },
+        { P_AEG_A,   "AMP A",   fmtMs      },
+        { P_AEG_D,   "AMP D",   fmtMs      },
+        { P_AEG_S,   "AMP S",   fmtPercent },
+        { P_AEG_R,   "AMP R",   fmtMs      },
+        { P_MEG_A,   "MOD A",   fmtMs      },
+        { P_MEG_D,   "MOD D",   fmtMs      },
+        { P_MEG_S,   "MOD S",   fmtPercent },
         { P_MEG_AMT, "MOD AMT", fmtPercent },
     }},
     { "LFO", {
@@ -101,14 +100,14 @@ const PageDef PAGES[PAGE_COUNT] = {
         { P_MASTER_VOL,     "MASTER",    fmtPercent },
     }},
     { "GLOBAL", {
-        { P_PORTAMENTO,  "PORTA",      fmtPortamento },
-        { P_VOICE_MODE,  "VOICE MODE", fmtVoiceMode  },
-        { PARAM_COUNT,   "",           nullptr },
-        { PARAM_COUNT,   "",           nullptr },
-        { PARAM_COUNT,   "",           nullptr },
-        { PARAM_COUNT,   "",           nullptr },
-        { PARAM_COUNT,   "",           nullptr },
-        { PARAM_COUNT,   "",           nullptr },
+        { P_PORTAMENTO, "PORTA",      fmtPortamento },
+        { P_VOICE_MODE, "VOICE MODE", fmtVoiceMode  },
+        { PARAM_COUNT,  "",           nullptr },
+        { PARAM_COUNT,  "",           nullptr },
+        { PARAM_COUNT,  "",           nullptr },
+        { PARAM_COUNT,  "",           nullptr },
+        { PARAM_COUNT,  "",           nullptr },
+        { PARAM_COUNT,  "",           nullptr },
     }},
     { "PATCH", {
         { PARAM_COUNT, "", nullptr },
