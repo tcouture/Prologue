@@ -16,6 +16,17 @@ public:
     }
     void setPitchBend(float bend01);
 
+    // Returns the number of active voices and fills mask[NUM_VOICES] with
+    // true for each voice that is currently active (in note + release tail).
+    uint8_t getVoiceActivity(bool* mask) const {
+        uint8_t count = 0;
+        for (int i = 0; i < NUM_VOICES; i++) {
+            mask[i] = voices[i].isActive();
+            if (mask[i]) count++;
+        }
+        return count;
+    }
+
 private:
     Voice voices[MAX_VOICES];
     uint8_t findFreeVoice();

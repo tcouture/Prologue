@@ -52,6 +52,11 @@ public:
 
     bool consumeParamChanged() { bool c = paramChanged; paramChanged = false; return c; }
 
+    // Voice activity passthrough
+    uint8_t getVoiceActivity(bool* mask) const {
+        return synthAudio.getVoices().getVoiceActivity(mask);
+    }
+
 private:
     Patch patch;
     bool paramChanged = false;

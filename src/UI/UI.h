@@ -21,9 +21,22 @@ private:
     int16_t dragStartY = 0;
     float   dragStartValue = 0.0f;
 
-    static constexpr int HEADER_H = 24;
-    static constexpr int STATUS_H = 16;
-    static constexpr int TAB_COUNT = PAGE_COUNT;
+    static constexpr int HEADER_H    = 24;
+    static constexpr int STATUS_H    = 16;
+    static constexpr int TAB_COUNT   = PAGE_COUNT - 1;  // PAGE_PATCH excluded from header
+    static constexpr int TAB_W       = 51;              // (320 - 2 margins - 5×2px gaps) / 6
+    static constexpr int TAB_GAP     = 2;
+    static constexpr int TAB_MARGIN  = 1;
+
+    static constexpr int PATCH_BTN_W = 52;              // PATCH button in status bar
+
+    // Status bar right-side metrics (all measured from right edge, rightward)
+    static constexpr int SB_RIGHT_MARGIN = 4;           // px from right edge
+    static constexpr int SB_CPU_W        = 42;          // 7 chars × 6px ("CPU:XX%")
+    static constexpr int SB_DOT_W        = 6;           // voice dot diameter
+    static constexpr int SB_DOT_GAP      = 2;           // gap between dots
+    static constexpr int SB_DOT_BLOCK    = NUM_VOICES * SB_DOT_W + (NUM_VOICES - 1) * SB_DOT_GAP;
+    static constexpr int SB_SECTION_GAP  = 4;           // gap between cpu/dots and dots/name
 
     int8_t patchBrowserIndex = 0;
     bool   fullRedraw = true;

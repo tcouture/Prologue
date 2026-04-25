@@ -1,5 +1,6 @@
 #include "UI.h"
 #include "UIWidgets.h"
+#include <Audio.h>   // AudioProcessorUsage()
 #include <string.h>
 
 void UI::begin(Display* d, Synth* s, PatchStorage* st) {
@@ -19,41 +20,52 @@ void UI::drawHeader() {
     ILI9341_t3& g = disp->tft();
     g.fillRect(0, 0, 320, HEADER_H, Theme::HEADER_BG);
 
-    int tabW = 38;
-    int tabSpacing = 1;
-    int x = 2;
+    int x = TAB_MARGIN;
     for (int i = 0; i < TAB_COUNT; i++) {
-        UIWidgets::drawTab(g, x, 2, tabW, HEADER_H - 4,
+        UIWidgets::drawTab(g, x, 2, TAB_W, HEADER_H - 4,
                            PAGES[i].name, i == currentPage);
-        x += tabW + tabSpacing;
+        x += TAB_W + TAB_GAP;
     }
-    g.setTextColor(Theme::ACCENT_AMBER);
-    g.setTextSize(1);
-    int nameX = 320 - 8 * 12;
-    if (nameX < x + 4) nameX = x + 4;
-    g.setCursor(nameX, 8);
-    g.print(synth->getPatch().name);
 }
 
 void UI::drawStatusBar() {
     ILI9341_t3& g = disp->tft();
     int y = 240 - STATUS_H;
-    g.fillRect(0, y, 320, STATUS_H, Theme::HEADER_BG);
-    g.setTextColor(Theme::TEXT);
-    g.setTextSize(1);
-    g.setCursor(4, y + 4);
+    int dotY = y + (STATUS_H - SB_DOT_W) / 2;  // vertically centre dots
 
-    if (selectedKnob >= 0 && currentPage != PAGE_PATCH) {
-        const KnobBinding& kb = PAGES[currentPage].knobs[selectedKnob];
-        if (kb.paramId < PARAM_COUNT) {
-            char val[16]; formatKnobValue(selectedKnob, val, sizeof(val));
-            char buf[48];
-            snprintf(buf, sizeof(buf), "%s: %s", kb.label, val);
-            g.print(buf);
-            return;
-        }
+    g.fillRect(0, y, 320, STATUS_H, Theme::HEADER_BG);
+
+    // --- PATCH button (bottom-left) ---
+    UIWidgets::drawButton(g, 0, y, PATCH_BTN_W, STATUS_H,
+                          "PATCH", currentPage == PAGE_PATCH);
+
+    // --- Patch name (amber, immediately right of PATCH button) ---
+    g.setTextColor(Theme::ACCENT_AMBER);
+    g.setTextSize(1);
+    g.setCursor(PATCH_BTN_W + 4, y + 4);
+    g.print(synth->getPatch().name);
+
+    // --- CPU usage (right-aligned at far right) ---
+    float cpu = AudioProcessorUsage();
+    char cpuBuf[8];
+    snprintf(cpuBuf, sizeof(cpuBuf), "%2d%%CPU", (int)cpu);  // e.g. "34%CPU"
+    int cpuX = 320 - SB_RIGHT_MARGIN - SB_CPU_W;
+    g.setTextColor(Theme::TEXT_DIM);
+    g.setTextSize(1);
+    g.setCursor(cpuX, y + 4);
+    g.print(cpuBuf);
+
+    // --- Voice activity dots (immediately left of CPU) ---
+    bool mask[NUM_VOICES];
+    synth->getVoiceActivity(mask);
+    int dotsRightX = cpuX - SB_SECTION_GAP;          // right edge of dot block
+    int dotsLeftX  = dotsRightX - SB_DOT_BLOCK;      // left edge of dot block
+    int dx = dotsLeftX;
+    for (int i = 0; i < NUM_VOICES; i++) {
+        uint16_t col = mask[i] ? Theme::ACCENT_AMBER : Theme::GRID;
+        g.fillRect(dx, dotY, SB_DOT_W, SB_DOT_W, col);
+        dx += SB_DOT_W + SB_DOT_GAP;
     }
-    g.print("CircuIT Prologue Emulator");
 }
 
 void UI::drawKnob(uint8_t idx) {
@@ -132,14 +144,13 @@ void UI::setSelectedKnob(int8_t idx) {
 
 void UI::hitTestHeader(int16_t x, int16_t y) {
     if (y >= HEADER_H) return;
-    int tabW = 38, tabSpacing = 1;
-    int tx = 2;
+    int tx = TAB_MARGIN;
     for (int i = 0; i < TAB_COUNT; i++) {
-        if (x >= tx && x < tx + tabW) {
+        if (x >= tx && x < tx + TAB_W) {
             selectPage((PageId)i);
             return;
         }
-        tx += tabW + tabSpacing;
+        tx += TAB_W + TAB_GAP;
     }
 }
 
@@ -160,14 +171,24 @@ void UI::handleTouch(int16_t x, int16_t y, bool pressed) {
     }
 
     if (!isDragging) {
+        // Header tab strip
         if (y < HEADER_H) {
             hitTestHeader(x, y);
             return;
         }
+
+        // PATCH button in the status bar (bottom-left)
+        int statusY = 240 - STATUS_H;
+        if (y >= statusY && x < PATCH_BTN_W) {
+            selectPage(PAGE_PATCH);
+            return;
+        }
+
         if (currentPage == PAGE_PATCH) {
             handlePatchTouch(x, y, true);
             return;
         }
+
         int8_t k = hitTestKnob(x, y);
         if (k >= 0) {
             setSelectedKnob(k);
